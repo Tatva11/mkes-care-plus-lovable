@@ -1,0 +1,25 @@
+name: mkes_care
+description: MKES CARE+ Clinical Management Platform
+publish_to: 'none'
+version: 2.4.1+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  supabase_flutter: ^2.9.1
+  flutter_dotenv: ^6.0.0
+  flutter_riverpod: ^2.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - api.env
