@@ -47,3 +47,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local environment secrets
+api.env
+.env
+.env.*
+
+# Flutter generated files.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
