@@ -32,6 +32,8 @@ class UserManagementRepository {
     String? department,
     String? designation,
     required String role,
+    double? salary,
+    DateTime? joiningDate,
   }) async {
     try {
       // Use RPC function to create user with admin privileges
@@ -45,6 +47,8 @@ class UserManagementRepository {
           'p_department': department,
           'p_designation': designation,
           'p_role': role,
+          'p_salary': salary,
+          'p_joining_date': joiningDate?.toIso8601String().split('T').first,
         },
       );
     } catch (e) {

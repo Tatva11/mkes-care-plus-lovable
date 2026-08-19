@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../admin/widgets/admin_shell.dart';
-import 'user_management_screen.dart';
+import '../../staff/screens/staff_management_screen.dart';
 
 class AdministrationScreen extends StatelessWidget {
   const AdministrationScreen({super.key});
@@ -79,8 +79,8 @@ class AdministrationContent extends StatelessWidget {
                             'Users',
                             'Add, remove, or modify user accounts.',
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const UserManagementScreen()),
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const StaffManagementScreen()),
                               );
                             },
                           ),
@@ -128,8 +128,8 @@ class AdministrationContent extends StatelessWidget {
                       'Users',
                       'Add, remove, or modify user accounts.',
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const UserManagementScreen()),
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const StaffManagementScreen()),
                         );
                       },
                     ),

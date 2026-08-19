@@ -182,6 +182,8 @@ class _InsightItem extends StatelessWidget {
         ),
       ),
       child: RichText(
+        overflow: TextOverflow.fade,
+        softWrap: true,
         text: TextSpan(
           style: AppTypography.bodyMd.copyWith(
             color: AppColors.onSurfaceVariant,

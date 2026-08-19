@@ -7,10 +7,14 @@ import '../../admin/widgets/admin_shell.dart';
 import '../../admin/screens/administration_screen.dart';
 import '../../department/screens/department_management_screen.dart';
 import '../../patients/screens/patient_list_screen.dart';
+import '../../admin/screens/user_form_dialog.dart';
 import '../widgets/staff_attendance_summary_card.dart';
 import '../widgets/staff_copilot_insights_card.dart';
 import '../widgets/staff_roster_card.dart';
 import '../widgets/staff_stat_card.dart';
+import '../../admin/screens/admin_leave_screen.dart';
+import '../../admin/screens/admin_task_screen.dart';
+import '../../admin/screens/admin_performance_attendance_screens.dart';
 
 class StaffManagementScreen extends StatelessWidget {
   const StaffManagementScreen({super.key});
@@ -138,7 +142,31 @@ class _PageHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        _AddStaffButton(isDesktop: isDesktop),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminLeaveScreen())),
+                  child: const Text('Leave'),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminTaskScreen())),
+                  child: const Text('Tasks'),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPerformanceScreen())),
+                  child: const Text('Performance'),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                _AddStaffButton(isDesktop: isDesktop),
+              ],
+            )
+          ],
+        )
       ],
     );
   }
@@ -152,7 +180,13 @@ class _AddStaffButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FilledButton.icon(
-      onPressed: () {},
+      onPressed: () {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const UserFormDialog(),
+        );
+      },
       icon: const Icon(Icons.add, size: 20),
       label: Text(
         isDesktop ? 'Add Staff' : 'Add',
@@ -230,27 +264,25 @@ class _StatRow extends StatelessWidget {
 class _DesktopLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Expanded(
-            flex: 5,
-            child: Column(
-              children: [
-                StaffAttendanceSummaryCard(),
-                SizedBox(height: AppSpacing.md),
-                StaffCopilotInsightsCard(),
-              ],
-            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        Expanded(
+          flex: 5,
+          child: Column(
+            children: [
+              StaffAttendanceSummaryCard(),
+              SizedBox(height: AppSpacing.md),
+              StaffCopilotInsightsCard(),
+            ],
           ),
-          SizedBox(width: AppSpacing.md),
-          Expanded(
-            flex: 7,
-            child: StaffRosterCard(),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(width: AppSpacing.md),
+        Expanded(
+          flex: 7,
+          child: StaffRosterCard(),
+        ),
+      ],
     );
   }
 }

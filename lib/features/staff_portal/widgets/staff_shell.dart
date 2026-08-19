@@ -68,29 +68,18 @@ class StaffShell extends ConsumerWidget {
       },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, st) {
-        // On error, allow access but log the issue
+        // SECURITY: On error, do NOT allow access. Sign out and show error.
         debugPrint('Role check error in StaffShell: $e');
-        final isDesktop = MediaQuery.sizeOf(context).width >= 768.0;
-
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: Column(
-            children: [
-              _StaffTopAppBar(
-                isDesktop: isDesktop,
-                selectedItem: selectedItem,
-                onNavItemSelected: onNavItemSelected,
-              ),
-              Expanded(child: body),
-            ],
-          ),
-          bottomNavigationBar: isDesktop
-              ? null
-              : _StaffBottomNavBar(
-                  selectedItem: selectedItem,
-                  onNavItemSelected: onNavItemSelected,
-                ),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session verification failed. Please sign in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          Supabase.instance.client.auth.signOut();
+        });
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }
@@ -145,11 +134,7 @@ class _StaffTopAppBar extends StatelessWidget {
                 ],
                 const NotificationCenterButton(),
                 const SizedBox(width: AppSpacing.xs),
-                const UserProfileMenu(
-                  name: 'Jane Doe',
-                  role: 'Senior Staff Nurse',
-                  initials: 'JD',
-                ),
+                const _StaffProfileMenuConsumer(),
               ],
             ),
           ),
@@ -167,6 +152,7 @@ class _BrandCluster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 32,
@@ -182,25 +168,29 @@ class _BrandCluster extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'MKES CARE+',
-              style: AppTypography.headlineMd.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (isDesktop)
+        Flexible(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                'Staff Portal',
-                style: AppTypography.labelCaps.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                  fontSize: 10,
+                'MKES CARE+',
+                style: AppTypography.headlineMd.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-          ],
+              if (isDesktop)
+                Text(
+                  'Staff Portal',
+                  style: AppTypography.labelCaps.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
         ),
       ],
     );
@@ -408,6 +398,35 @@ class _BottomNavItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Reads the current staff user's profile from Supabase and passes it to [UserProfileMenu].
+/// Falls back to safe defaults while loading or on error.
+class _StaffProfileMenuConsumer extends ConsumerWidget {
+  const _StaffProfileMenuConsumer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) => UserProfileMenu(
+        name: profile?.fullName ?? 'Staff Member',
+        role: profile?.designation ?? profile?.roleDisplayName ?? 'Staff',
+        initials: profile?.initials ?? 'S',
+      ),
+      loading: () => const UserProfileMenu(
+        name: 'Loading...',
+        role: 'Staff Member',
+        initials: '...',
+      ),
+      error: (_, __) => const UserProfileMenu(
+        name: 'Staff Member',
+        role: 'Staff Member',
+        initials: 'S',
       ),
     );
   }

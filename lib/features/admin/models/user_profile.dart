@@ -7,6 +7,8 @@ class UserProfile {
   final String? designation;
   final String role;
   final bool isActive;
+  final double? salary;
+  final DateTime? joiningDate;
   final DateTime createdAt;
 
   UserProfile({
@@ -18,6 +20,8 @@ class UserProfile {
     this.designation,
     required this.role,
     required this.isActive,
+    this.salary,
+    this.joiningDate,
     required this.createdAt,
   });
 
@@ -31,6 +35,8 @@ class UserProfile {
       designation: json['designation'] as String?,
       role: json['role'] as String,
       isActive: json['is_active'] as bool,
+      salary: json['salary'] != null ? (json['salary'] as num).toDouble() : null,
+      joiningDate: json['joining_date'] != null ? DateTime.parse(json['joining_date'] as String) : null,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -45,6 +51,8 @@ class UserProfile {
       'designation': designation,
       'role': role,
       'is_active': isActive,
+      'salary': salary,
+      'joining_date': joiningDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };
   }

@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../admin/widgets/admin_shell.dart';
+import '../../auth/providers/auth_provider.dart';
 
-class MyProfileScreen extends StatelessWidget {
+/// Displays the currently logged-in user's own profile, sourced from Supabase.
+/// Uses [currentProfileProvider] for real data instead of hardcoded values.
+class MyProfileScreen extends ConsumerWidget {
   const MyProfileScreen({
     super.key,
-    this.name = 'Dr. Alex Morgan',
-    this.role = 'Clinic Administrator & Senior Ophthalmologist',
-    this.initials = 'AM',
+    // These optional overrides are kept for backward compatibility
+    // with calls from UserProfileMenu, but real data takes precedence.
+    this.name,
+    this.role,
+    this.initials,
   });
 
-  final String name;
-  final String role;
-  final String initials;
+  final String? name;
+  final String? role;
+  final String? initials;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(currentProfileProvider);
+
     return AdminShell(
       selectedItem: AdminNavItem.dashboard,
       onNavItemSelected: (item) {
@@ -26,209 +34,232 @@ class MyProfileScreen extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 768.0;
+      body: profileAsync.when(
+        data: (profile) {
+          final displayName = profile?.fullName ?? name ?? 'User';
+          final displayRole =
+              profile?.designation ?? profile?.roleDisplayName ?? role ?? 'Staff';
+          final displayInitials = profile?.initials ?? initials ?? '?';
+          final displayEmail = profile?.email ?? '—';
+          final displayPhone = profile?.phoneNumber ?? '—';
+          final displayDepartment = profile?.department ?? '—';
+          final displayDesignation = profile?.designation ?? '—';
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(
-              isDesktop ? AppSpacing.marginDesktop : AppSpacing.marginMobile,
-            ),
+          return _buildContent(
+            context,
+            displayName: displayName,
+            displayRole: displayRole,
+            displayInitials: displayInitials,
+            displayEmail: displayEmail,
+            displayPhone: displayPhone,
+            displayDepartment: displayDepartment,
+            displayDesignation: displayDesignation,
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Header Bar
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'User Profile',
-                      style: AppTypography.displayLg.copyWith(
-                        color: AppColors.onBackground,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // Hero Profile Card
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                    border: Border.all(color: AppColors.outlineVariant),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0A000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.primary,
-                        child: Text(
-                          initials,
-                          style: AppTypography.displayLg.copyWith(
-                            color: AppColors.onPrimary,
-                            fontSize: 28,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: AppTypography.headlineMd.copyWith(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              role,
-                              style: AppTypography.bodyMd.copyWith(
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'NPI: #994021048',
-                                    style: AppTypography.dataMono.copyWith(
-                                      color: AppColors.primaryContainer,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.secondaryContainer.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'License: #MED-OR-8821',
-                                    style: AppTypography.dataMono.copyWith(
-                                      color: AppColors.secondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // Details Bento Grid
-                if (isDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildSectionCard(
-                          'Personal Information',
-                          Icons.person_outline,
-                          [
-                            _detailRow('Full Name', name),
-                            _detailRow('Email Address', 'alex.morgan@mkescare.org'),
-                            _detailRow('Phone Number', '+1 (555) 019-2834'),
-                            _detailRow('Office Address', 'Suite 402, MKES Health Plaza'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: _buildSectionCard(
-                          'Professional Credentials',
-                          Icons.workspace_premium_outlined,
-                          [
-                            _detailRow('Specialization', 'Ophthalmology & Refractive Surgery'),
-                            _detailRow('Department', 'Optometry & Clinical Admin'),
-                            _detailRow('Years of Practice', '14 Years'),
-                            _detailRow('Hospital Privilege', 'MKES CARE+ Central Hospital'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Column(
-                    children: [
-                      _buildSectionCard(
-                        'Personal Information',
-                        Icons.person_outline,
-                        [
-                          _detailRow('Full Name', name),
-                          _detailRow('Email Address', 'alex.morgan@mkescare.org'),
-                          _detailRow('Phone Number', '+1 (555) 019-2834'),
-                          _detailRow('Office Address', 'Suite 402, MKES Health Plaza'),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _buildSectionCard(
-                        'Professional Credentials',
-                        Icons.workspace_premium_outlined,
-                        [
-                          _detailRow('Specialization', 'Ophthalmology & Refractive Surgery'),
-                          _detailRow('Department', 'Optometry & Clinical Admin'),
-                          _detailRow('Years of Practice', '14 Years'),
-                          _detailRow('Hospital Privilege', 'MKES CARE+ Central Hospital'),
-                        ],
-                      ),
-                    ],
-                  ),
-
+                const Icon(Icons.error_outline, size: 48, color: AppColors.error),
                 const SizedBox(height: AppSpacing.md),
-
-                _buildSectionCard(
-                  'Account Security & Activity',
-                  Icons.shield_outlined,
-                  [
-                    _detailRow('Security Level', 'Administrator (Level 5 Clearance)'),
-                    _detailRow('Two-Factor Auth', 'Enabled (Authenticator App)'),
-                    _detailRow('Last System Sign-in', 'Today at 08:30 AM from 192.168.1.45'),
-                  ],
+                Text(
+                  'Could not load profile.',
+                  style: AppTypography.headlineMd,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Please check your connection and try again.',
+                  style: AppTypography.bodySm.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context, {
+    required String displayName,
+    required String displayRole,
+    required String displayInitials,
+    required String displayEmail,
+    required String displayPhone,
+    required String displayDepartment,
+    required String displayDesignation,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 768.0;
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(
+            isDesktop ? AppSpacing.marginDesktop : AppSpacing.marginMobile,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Bar
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'My Profile',
+                    style: AppTypography.displayLg.copyWith(
+                      color: AppColors.onBackground,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Hero Profile Card
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                  border: Border.all(color: AppColors.outlineVariant),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: AppColors.primary,
+                      child: Text(
+                        displayInitials,
+                        style: AppTypography.displayLg.copyWith(
+                          color: AppColors.onPrimary,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: AppTypography.headlineMd.copyWith(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            displayRole,
+                            style: AppTypography.bodyMd.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.primaryContainer.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              displayDepartment != '—'
+                                  ? 'Dept: $displayDepartment'
+                                  : 'MKES CARE+ Platform',
+                              style: AppTypography.dataMono.copyWith(
+                                color: AppColors.primaryContainer,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Details Grid
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _buildSectionCard(
+                        'Personal Information',
+                        Icons.person_outline,
+                        [
+                          _detailRow('Full Name', displayName),
+                          _detailRow('Email Address', displayEmail),
+                          _detailRow('Phone Number', displayPhone),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _buildSectionCard(
+                        'Professional Details',
+                        Icons.workspace_premium_outlined,
+                        [
+                          _detailRow('Department', displayDepartment),
+                          _detailRow('Designation', displayDesignation),
+                          _detailRow('Role', displayRole),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    _buildSectionCard(
+                      'Personal Information',
+                      Icons.person_outline,
+                      [
+                        _detailRow('Full Name', displayName),
+                        _detailRow('Email Address', displayEmail),
+                        _detailRow('Phone Number', displayPhone),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _buildSectionCard(
+                      'Professional Details',
+                      Icons.workspace_premium_outlined,
+                      [
+                        _detailRow('Department', displayDepartment),
+                        _detailRow('Designation', displayDesignation),
+                        _detailRow('Role', displayRole),
+                      ],
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 

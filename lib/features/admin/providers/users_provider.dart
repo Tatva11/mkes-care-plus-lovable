@@ -54,6 +54,8 @@ class UsersNotifier extends StateNotifier<AsyncValue<List<UserProfile>>> {
     String? department,
     String? designation,
     required String role,
+    double? salary,
+    DateTime? joiningDate,
   }) async {
     await _repository.createUser(
       fullName: fullName,
@@ -63,6 +65,8 @@ class UsersNotifier extends StateNotifier<AsyncValue<List<UserProfile>>> {
       department: department,
       designation: designation,
       role: role,
+      salary: salary,
+      joiningDate: joiningDate,
     );
     await fetchUsers(); // Refresh list
   }

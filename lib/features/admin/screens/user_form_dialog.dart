@@ -24,6 +24,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
   late final TextEditingController _phoneController;
   late final TextEditingController _departmentController;
   late final TextEditingController _designationController;
+  late final TextEditingController _salaryController;
+  late final TextEditingController _joiningDateController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
   
@@ -42,6 +44,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
     _phoneController = TextEditingController(text: widget.user?.phoneNumber);
     _departmentController = TextEditingController(text: widget.user?.department);
     _designationController = TextEditingController(text: widget.user?.designation);
+    _salaryController = TextEditingController(text: widget.user?.salary?.toString() ?? '');
+    _joiningDateController = TextEditingController(text: widget.user?.joiningDate?.toIso8601String().split('T').first ?? '');
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     if (widget.user != null) {
@@ -56,6 +60,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
     _phoneController.dispose();
     _departmentController.dispose();
     _designationController.dispose();
+    _salaryController.dispose();
+    _joiningDateController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -77,6 +83,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
           department: _departmentController.text.trim().isEmpty ? null : _departmentController.text.trim(),
           designation: _designationController.text.trim().isEmpty ? null : _designationController.text.trim(),
           role: _selectedRole,
+          salary: _salaryController.text.trim().isEmpty ? null : double.tryParse(_salaryController.text.trim()),
+          joiningDate: _joiningDateController.text.trim().isEmpty ? null : DateTime.tryParse(_joiningDateController.text.trim()),
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -91,6 +99,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
           'department': _departmentController.text.trim(),
           'designation': _designationController.text.trim(),
           'role': _selectedRole,
+          'salary': _salaryController.text.trim().isEmpty ? null : double.tryParse(_salaryController.text.trim()),
+          'joining_date': _joiningDateController.text.trim().isEmpty ? null : _joiningDateController.text.trim(),
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -115,15 +125,28 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+
+    // Responsive max width: up to 500px, but always fits the screen with 32px margins.
+    final dialogMaxWidth = (screenWidth - 32).clamp(280.0, 500.0);
+    // Responsive max height: leave room for keyboard and status bar.
+    final dialogMaxHeight = (screenHeight - viewInsets.bottom - 80).clamp(300.0, 640.0);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
-      child: Container(
-        width: 500,
-        constraints: const BoxConstraints(maxHeight: 600),
+      // insetPadding keeps the dialog from touching screen edges on small phones.
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: dialogMaxWidth,
+          maxHeight: dialogMaxHeight,
+        ),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,41 +228,82 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: MkesTextField(
-                        controller: _phoneController,
-                        label: 'Phone Number',
-                        keyboardType: TextInputType.phone,
-                        validator: (v) {
-                          if (v != null && v.isNotEmpty && v.length < 10) {
-                            return 'Enter a valid phone number (min 10 digits)';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedRole,
-                        decoration: InputDecoration(
-                          labelText: 'Role',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                // On very small screens, stack Phone + Role vertically
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final narrow = constraints.maxWidth < 320;
+                    if (narrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          MkesTextField(
+                            controller: _phoneController,
+                            label: 'Phone Number',
+                            keyboardType: TextInputType.phone,
+                            validator: (v) {
+                              if (v != null && v.isNotEmpty && v.length < 10) {
+                                return 'Enter a valid phone number (min 10 digits)';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedRole,
+                            decoration: InputDecoration(
+                              labelText: 'Role',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'staff', child: Text('Staff')),
+                              DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                            ],
+                            onChanged: (val) {
+                              setState(() => _selectedRole = val!);
+                            },
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: MkesTextField(
+                            controller: _phoneController,
+                            label: 'Phone Number',
+                            keyboardType: TextInputType.phone,
+                            validator: (v) {
+                              if (v != null && v.isNotEmpty && v.length < 10) {
+                                return 'Enter a valid phone number (min 10 digits)';
+                              }
+                              return null;
+                            },
                           ),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 'staff', child: Text('Staff')),
-                          DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                        ],
-                        onChanged: (val) {
-                          setState(() => _selectedRole = val!);
-                        },
-                      ),
-                    ),
-                  ],
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _selectedRole,
+                            decoration: InputDecoration(
+                              labelText: 'Role',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'staff', child: Text('Staff')),
+                              DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                            ],
+                            onChanged: (val) {
+                              setState(() => _selectedRole = val!);
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Row(
@@ -255,6 +319,26 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
                       child: MkesTextField(
                         controller: _designationController,
                         label: 'Designation',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MkesTextField(
+                        controller: _salaryController,
+                        label: 'Salary',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: MkesTextField(
+                        controller: _joiningDateController,
+                        label: 'Joining Date (YYYY-MM-DD)',
+                        keyboardType: TextInputType.datetime,
                       ),
                     ),
                   ],
@@ -277,6 +361,8 @@ class _UserFormDialogState extends ConsumerState<UserFormDialog> {
                       ),
                   ],
                 ),
+                // Extra bottom padding so last button is never hidden behind keyboard
+                SizedBox(height: viewInsets.bottom > 0 ? AppSpacing.md : 0),
               ],
             ),
           ),

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/role_selection_screen.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'features/staff_portal/screens/staff_dashboard_screen.dart';
 
@@ -16,7 +16,6 @@ Future<void> main() async {
     await dotenv.load(fileName: "api.env");
   } catch (e) {
     debugPrint('Error loading environment file: $e');
-    // Continue with empty env - will fail gracefully later
   }
 
   final supabaseUrl = dotenv.env['SUPABASE_URL'];
@@ -60,6 +59,16 @@ class MkesCareApp extends StatelessWidget {
   }
 }
 
+/// Central authentication routing wrapper.
+///
+/// Flow:
+///   App Start
+///     → Listen to Supabase auth state
+///     → No session → RoleSelectionScreen
+///     → Session exists → fetch profile
+///       → profile.role == 'admin' && is_active → AdminDashboardScreen
+///       → profile.role == 'staff' && is_active → StaffDashboardScreen
+///       → inactive / missing / wrong role → sign out + error message
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
 
@@ -70,70 +79,83 @@ class AuthWrapper extends ConsumerWidget {
     return authStateAsync.when(
       data: (authState) {
         final session = authState.session;
+
+        // No active session → show role selection (portal landing).
         if (session == null) {
-          return const LoginScreen();
+          return const RoleSelectionScreen();
         }
 
-        // We are authenticated. Now check the role to redirect correctly.
+        // Session exists — resolve the user's role via profile.
         final roleAsync = ref.watch(currentUserRoleProvider);
 
         return roleAsync.when(
           data: (role) {
-            if (role == 'admin') {
-              return const AdminDashboardScreen();
-            } else if (role == 'staff') {
-              return const StaffDashboardScreen();
-            } else if (role == 'inactive') {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('This account has been disabled.'),
-                    backgroundColor: Colors.red,
-                  ),
+            switch (role) {
+              case 'admin':
+                return const AdminDashboardScreen();
+
+              case 'staff':
+                return const StaffDashboardScreen();
+
+              case 'inactive':
+                _signOutWithMessage(
+                  context,
+                  'Your account is currently inactive. Please contact an administrator.',
                 );
-                Supabase.instance.client.auth.signOut();
-              });
-              return const Scaffold(body: Center(child: CircularProgressIndicator()));
-            } else {
-              // If role is null or an error occurred
-              final errorMessage = (role != null && role.startsWith('ERROR: ')) 
-                  ? role 
-                  : 'Profile not found. Please contact your administrator.';
-                  
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(errorMessage),
-                    backgroundColor: Colors.red,
-                  ),
+                return _loadingScaffold();
+
+              case null:
+                _signOutWithMessage(
+                  context,
+                  'Your account is authenticated, but your clinic profile could not be found. '
+                  'Please contact your administrator.',
                 );
-                Supabase.instance.client.auth.signOut();
-              });
-              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return _loadingScaffold();
+
+              default:
+                // Unknown role — sign out.
+                _signOutWithMessage(
+                  context,
+                  'Your account has an unrecognised role. Please contact your administrator.',
+                );
+                return _loadingScaffold();
             }
           },
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: _loadingScaffold,
           error: (e, st) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Failed to load profile. Please try logging in again.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-              Supabase.instance.client.auth.signOut();
-            });
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            debugPrint('AuthWrapper role resolution error: $e');
+            _signOutWithMessage(
+              context,
+              'Failed to verify your account. Please sign in again.',
+            );
+            return _loadingScaffold();
           },
         );
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, st) => const LoginScreen(),
+      loading: _loadingScaffold,
+      error: (e, st) => const RoleSelectionScreen(),
     );
+  }
+
+  Widget _loadingScaffold() {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  void _signOutWithMessage(BuildContext context, String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Supabase.instance.client.auth.signOut();
+    });
   }
 }
 
@@ -143,7 +165,7 @@ class ConfigurationErrorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MKES CARE+ - Configuration Error',
+      title: 'MKES CARE+ — Configuration Error',
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
@@ -152,22 +174,16 @@ class ConfigurationErrorApp extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
                 const SizedBox(height: 24),
                 const Text(
                   'Configuration Error',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Please ensure api.env file exists with SUPABASE_URL and SUPABASE_ANON_KEY.',
+                  'Please ensure the api.env file exists with valid '
+                  'SUPABASE_URL and SUPABASE_ANON_KEY values.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16),
                 ),

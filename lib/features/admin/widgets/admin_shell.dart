@@ -10,6 +10,7 @@ import '../../../shared/widgets/notification_center_modal.dart';
 import '../../../shared/widgets/user_profile_menu.dart';
 import '../../auth/providers/auth_provider.dart';
 
+
 enum AdminNavItem { dashboard, staff, patients, operations, administration }
 
 class AdminShell extends ConsumerWidget {
@@ -71,29 +72,18 @@ class AdminShell extends ConsumerWidget {
       },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, st) {
-        // On error, allow access but log the issue
+        // SECURITY: On error, do NOT allow access. Sign out and show error.
         debugPrint('Role check error in AdminShell: $e');
-        final isDesktop = MediaQuery.sizeOf(context).width >= _desktopBreakpoint;
-
-        return Scaffold(
-          backgroundColor: AppColors.surfaceContainerLowest,
-          body: Column(
-            children: [
-              _AdminTopAppBar(
-                isDesktop: isDesktop,
-                selectedItem: selectedItem,
-                onNavItemSelected: onNavItemSelected,
-              ),
-              Expanded(child: body),
-            ],
-          ),
-          bottomNavigationBar: isDesktop
-              ? null
-              : _AdminBottomNavBar(
-                  selectedItem: selectedItem,
-                  onNavItemSelected: onNavItemSelected,
-                ),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session verification failed. Please sign in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          Supabase.instance.client.auth.signOut();
+        });
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }
@@ -163,11 +153,7 @@ class _AdminTopAppBar extends StatelessWidget {
                   ],
                   const NotificationCenterButton(),
                   const SizedBox(width: AppSpacing.xs),
-                  const UserProfileMenu(
-                    name: 'Dr. Alex Morgan',
-                    role: 'Clinic Administrator',
-                    initials: 'AM',
-                  ),
+                  const _ProfileMenuConsumer(),
                 ],
               ),
             ),
@@ -524,6 +510,35 @@ class _GlobalSearchBar extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Reads the current user's profile from Supabase and passes it to [UserProfileMenu].
+/// Falls back to safe defaults while loading or on error.
+class _ProfileMenuConsumer extends ConsumerWidget {
+  const _ProfileMenuConsumer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(currentProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) => UserProfileMenu(
+        name: profile?.fullName ?? 'Administrator',
+        role: profile?.designation ?? profile?.roleDisplayName ?? 'Administrator',
+        initials: profile?.initials ?? 'A',
+      ),
+      loading: () => const UserProfileMenu(
+        name: 'Loading...',
+        role: 'Administrator',
+        initials: '...',
+      ),
+      error: (_, __) => const UserProfileMenu(
+        name: 'Administrator',
+        role: 'Administrator',
+        initials: 'A',
       ),
     );
   }

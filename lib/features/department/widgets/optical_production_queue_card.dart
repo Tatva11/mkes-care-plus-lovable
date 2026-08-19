@@ -64,6 +64,18 @@ class OpticalProductionQueueCard extends StatelessWidget {
     ),
   ];
 
+  // Builds interleaved order rows with dividers between them.
+  List<Widget> _buildOrderRows() {
+    final rows = <Widget>[];
+    for (int i = 0; i < _orders.length; i++) {
+      rows.add(_OrderRow(order: _orders[i]));
+      if (i < _orders.length - 1) {
+        rows.add(const Divider(height: 1, color: AppColors.surfaceVariant));
+      }
+    }
+    return rows;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -82,7 +94,7 @@ class OpticalProductionQueueCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
+          // ── Card Header ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: const BoxDecoration(
@@ -97,9 +109,12 @@ class OpticalProductionQueueCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Optical Production Queue',
-                  style: AppTypography.headlineMd,
+                Expanded(
+                  child: Text(
+                    'Optical Production Queue',
+                    style: AppTypography.headlineMd,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 Row(
                   children: [
@@ -125,14 +140,15 @@ class OpticalProductionQueueCard extends StatelessWidget {
               ],
             ),
           ),
-          // Table Data & List
+          // ── Table (horizontally scrollable on narrow screens) ────
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
               width: 600,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Table Data Header
+                  // Column headers
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
@@ -140,29 +156,21 @@ class OpticalProductionQueueCard extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const SizedBox(width: 4), // Matches AI 4px bar width
+                        const SizedBox(width: 4),
                         Expanded(flex: 2, child: _HeaderCell('Order ID')),
                         Expanded(flex: 3, child: _HeaderCell('Patient')),
                         Expanded(flex: 3, child: _HeaderCell('Lens Type')),
                         Expanded(flex: 3, child: _HeaderCell('Progress')),
-                        Expanded(flex: 2, child: _HeaderCell('Status', alignRight: true)),
+                        Expanded(
+                          flex: 2,
+                          child: _HeaderCell('Status', alignRight: true),
+                        ),
                       ],
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.surfaceVariant),
-                  // List Body
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _orders.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      height: 1,
-                      color: AppColors.surfaceVariant,
-                    ),
-                    itemBuilder: (context, index) {
-                      return _OrderRow(order: _orders[index]);
-                    },
-                  ),
+                  // Data rows with dividers
+                  ..._buildOrderRows(),
                 ],
               ),
             ),

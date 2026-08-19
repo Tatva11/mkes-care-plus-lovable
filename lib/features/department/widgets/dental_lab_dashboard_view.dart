@@ -85,52 +85,35 @@ class DentalLabDashboardView extends StatelessWidget {
         if (isDesktop)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
+            children: const [
+              Expanded(
                 flex: 8,
-                child: SizedBox(
-                  height: 500,
-                  child: DentalLabQueueCard(),
-                ),
+                child: DentalLabQueueCard(),
               ),
-              const SizedBox(width: AppSpacing.md),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 flex: 4,
                 child: Column(
-                  children: const [
-                    SizedBox(
-                      height: 320,
-                      child: _TechnicianWorkloadCard(),
-                    ),
+                  children: [
+                    _TechnicianWorkloadCard(),
                     SizedBox(height: AppSpacing.md),
-                    SizedBox(
-                      height: 164,
-                      child: _DentalCopilotActionCard(),
-                    ),
+                    _DentalCopilotActionCard(),
                   ],
                 ),
               ),
             ],
           )
         else
-          Column(
-            children: const [
-              SizedBox(
-                height: 500,
-                child: DentalLabQueueCard(),
-              ),
+          const Column(
+            children: [
+              DentalLabQueueCard(),
               SizedBox(height: AppSpacing.md),
-              SizedBox(
-                height: 320,
-                child: _TechnicianWorkloadCard(),
-              ),
+              _TechnicianWorkloadCard(),
               SizedBox(height: AppSpacing.md),
-              SizedBox(
-                height: 164,
-                child: _DentalCopilotActionCard(),
-              ),
+              _DentalCopilotActionCard(),
             ],
           ),
+
       ],
     );
   }
@@ -176,7 +159,14 @@ class _TechnicianWorkloadCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(name, style: AppTypography.bodyMd.copyWith(fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Text(
+                name,
+                style: AppTypography.bodyMd.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
             Text(status, style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
           ],
         ),
@@ -207,22 +197,27 @@ class _DentalCopilotActionCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               const Icon(Icons.auto_awesome, color: AppColors.secondary, size: 18),
               const SizedBox(width: AppSpacing.xs),
-              Text(
-                'AI CAD/CAM Suggestion',
-                style: AppTypography.labelCaps.copyWith(color: AppColors.secondary),
+              Flexible(
+                child: Text(
+                  'AI CAD/CAM Suggestion',
+                  style: AppTypography.labelCaps.copyWith(color: AppColors.secondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Re-assign #DEN-4014 to Tech Sam Rivera for faster 3D printing throughput.',
             style: AppTypography.bodySm.copyWith(color: AppColors.onSurface),
           ),
+          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton(

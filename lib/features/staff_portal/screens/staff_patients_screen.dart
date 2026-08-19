@@ -52,14 +52,17 @@ class StaffPatientsScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('My Shift Patients', style: AppTypography.displayLg.copyWith(color: AppColors.onBackground)),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('Active patients assigned to your care today', style: AppTypography.bodyLg.copyWith(color: AppColors.onSurfaceVariant)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('My Shift Patients', style: AppTypography.displayLg.copyWith(color: AppColors.onBackground)),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text('Active patients assigned to your care today', style: AppTypography.bodyLg.copyWith(color: AppColors.onSurfaceVariant)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.md),
                 FilledButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.history_edu),

@@ -41,18 +41,22 @@ class DepartmentStatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: AppTypography.labelCaps.copyWith(
-                  color: AppColors.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTypography.labelCaps.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               Icon(icon, size: 20, color: iconColor),
             ],
           ),
@@ -145,6 +149,8 @@ class DepartmentCopilotInsightCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           RichText(
+            overflow: TextOverflow.fade,
+            softWrap: true,
             text: TextSpan(
               style: AppTypography.bodySm.copyWith(color: AppColors.onSurface),
               children: _buildTextSpans(),

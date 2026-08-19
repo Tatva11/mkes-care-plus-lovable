@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mkes_care/features/staff_portal/widgets/staff_shell.dart';
+import '../widgets/staff_shell.dart';
 import 'staff_attendance_screen.dart';
 import 'staff_patients_screen.dart';
 import 'staff_schedule_screen.dart';

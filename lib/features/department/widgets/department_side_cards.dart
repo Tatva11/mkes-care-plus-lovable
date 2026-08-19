@@ -90,26 +90,31 @@ class OpticalInventoryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      ),
+                      child: Icon(
+                        Icons.inventory_2,
+                        color: AppColors.tertiary,
+                        size: 20,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.inventory_2,
-                      color: AppColors.tertiary,
-                      size: 20,
+                    const SizedBox(width: AppSpacing.xs),
+                    Flexible(
+                      child: Text(
+                        'Optical Inventory',
+                        style: AppTypography.headlineMd.copyWith(fontSize: 18),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'Optical Inventory',
-                    style: AppTypography.headlineMd.copyWith(fontSize: 18),
-                  ),
-                ],
+                  ],
+                ),
               ),
               TextButton(
                 onPressed: () {},
@@ -146,20 +151,26 @@ class OpticalInventoryCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              item.name,
-                              style: AppTypography.bodySm.copyWith(
-                                fontWeight: FontWeight.w500,
+                        Flexible(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  item.name,
+                                  style: AppTypography.bodySm.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                            if (item.hasWarning) ...[
-                              const SizedBox(width: 4),
-                              Icon(Icons.warning, size: 12, color: AppColors.error),
+                              if (item.hasWarning) ...[
+                                const SizedBox(width: 4),
+                                Icon(Icons.warning, size: 12, color: AppColors.error),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
+                        const SizedBox(width: 4),
                         Text(
                           item.count.toString(),
                           style: AppTypography.dataMono.copyWith(

@@ -1,67 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../admin/providers/users_provider.dart';
 import 'staff_member_tile.dart';
 
-class StaffRosterCard extends StatelessWidget {
+class StaffRosterCard extends ConsumerWidget {
   const StaffRosterCard({super.key});
 
-  static const _roster = [
-    StaffMember(
-      name: 'Dr. Anita Sharma',
-      role: 'Dentist',
-      department: 'Dental',
-      status: StaffStatus.present,
-      shift: '09:00–17:00',
-    ),
-    StaffMember(
-      name: 'Ravi Mehta',
-      role: 'Optometrist',
-      department: 'OPD',
-      status: StaffStatus.present,
-      shift: '08:00–16:00',
-    ),
-    StaffMember(
-      name: 'Sonia Patel',
-      role: 'Pharmacist',
-      department: 'Pharmacy',
-      status: StaffStatus.present,
-      shift: '10:00–18:00',
-    ),
-    StaffMember(
-      name: 'Kiran Joshi',
-      role: 'Dental Assistant',
-      department: 'Dental',
-      status: StaffStatus.onLeave,
-      shift: '—',
-    ),
-    StaffMember(
-      name: 'Neha Verma',
-      role: 'Receptionist',
-      department: 'OPD',
-      status: StaffStatus.present,
-      shift: '08:00–14:00',
-    ),
-    StaffMember(
-      name: 'Aakash Singh',
-      role: 'Lab Technician',
-      department: 'Dental',
-      status: StaffStatus.offDuty,
-      shift: '14:00–22:00',
-    ),
-    StaffMember(
-      name: 'Pooja Nair',
-      role: 'Nurse',
-      department: 'OPD',
-      status: StaffStatus.present,
-      shift: '09:00–17:00',
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usersState = ref.watch(usersProvider);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
@@ -169,14 +120,38 @@ class StaffRosterCard extends StatelessWidget {
               horizontal: AppSpacing.xs,
               vertical: AppSpacing.xs,
             ),
-            child: Column(
-              children: [
-                for (var i = 0; i < _roster.length; i++)
-                  StaffMemberTile(
-                    member: _roster[i],
-                    showDivider: i < _roster.length - 1,
-                  ),
-              ],
+            child: usersState.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (e, st) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Text('Error: $e'),
+                ),
+              ),
+              data: (users) {
+                if (users.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Text('No staff found.'),
+                    ),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (var i = 0; i < users.length; i++)
+                      StaffMemberTile(
+                        user: users[i],
+                        showDivider: i < users.length - 1,
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ],

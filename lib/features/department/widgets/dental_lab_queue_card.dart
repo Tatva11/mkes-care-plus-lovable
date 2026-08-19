@@ -71,6 +71,18 @@ class DentalLabQueueCard extends StatelessWidget {
     ),
   ];
 
+  // Builds interleaved case rows with dividers between them.
+  List<Widget> _buildCaseRows() {
+    final rows = <Widget>[];
+    for (int i = 0; i < _cases.length; i++) {
+      rows.add(_DentalRow(item: _cases[i]));
+      if (i < _cases.length - 1) {
+        rows.add(const Divider(height: 1, color: AppColors.surfaceVariant));
+      }
+    }
+    return rows;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -89,7 +101,7 @@ class DentalLabQueueCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
+          // ── Card Header ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: const BoxDecoration(
@@ -104,9 +116,12 @@ class DentalLabQueueCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Dental Lab Tracking Queue',
-                  style: AppTypography.headlineMd,
+                Expanded(
+                  child: Text(
+                    'Dental Lab Tracking Queue',
+                    style: AppTypography.headlineMd,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 Row(
                   children: [
@@ -127,13 +142,15 @@ class DentalLabQueueCard extends StatelessWidget {
               ],
             ),
           ),
-          // Table Content with horizontal scroll
+          // ── Table (horizontally scrollable on narrow screens) ────
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
               width: 650,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Column headers
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
@@ -147,23 +164,16 @@ class DentalLabQueueCard extends StatelessWidget {
                         Expanded(flex: 3, child: _HeaderCell('Restoration')),
                         Expanded(flex: 3, child: _HeaderCell('Technician')),
                         Expanded(flex: 3, child: _HeaderCell('Stage')),
-                        Expanded(flex: 2, child: _HeaderCell('Status', alignRight: true)),
+                        Expanded(
+                          flex: 2,
+                          child: _HeaderCell('Status', alignRight: true),
+                        ),
                       ],
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.surfaceVariant),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _cases.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      height: 1,
-                      color: AppColors.surfaceVariant,
-                    ),
-                    itemBuilder: (context, index) {
-                      return _DentalRow(item: _cases[index]);
-                    },
-                  ),
+                  // Data rows with dividers
+                  ..._buildCaseRows(),
                 ],
               ),
             ),

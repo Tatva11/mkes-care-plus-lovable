@@ -125,8 +125,15 @@ class _StaffScheduleScreenState extends State<StaffScheduleScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        // Ensure content is never hidden behind the keyboard.
+        final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
         return Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.lg,
+            bottom: bottomInset + AppSpacing.lg,
+          ),
           decoration: const BoxDecoration(
             color: AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
@@ -374,14 +381,17 @@ class _StaffScheduleScreenState extends State<StaffScheduleScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('My Schedule', style: AppTypography.displayLg.copyWith(color: AppColors.onBackground)),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('Today, Monday, August 3, 2026', style: AppTypography.bodyLg.copyWith(color: AppColors.onSurfaceVariant)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('My Schedule', style: AppTypography.displayLg.copyWith(color: AppColors.onBackground)),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text('Today, Monday, August 3, 2026', style: AppTypography.bodyLg.copyWith(color: AppColors.onSurfaceVariant)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.md),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                   decoration: BoxDecoration(
